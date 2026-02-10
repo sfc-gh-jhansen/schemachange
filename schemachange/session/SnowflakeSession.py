@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import time
 from collections import defaultdict
 from textwrap import dedent, indent
@@ -455,9 +454,20 @@ class SnowflakeSession:
         self,
         script: VersionedScript | RepeatableScript | AlwaysScript,
         script_content: str,
+        script_checksum: str,
         dry_run: bool,
         logger: structlog.BoundLogger,
     ) -> None:
+        """
+        Apply a change script to Snowflake and record it in the change history table.
+
+        Args:
+            script: The script object containing metadata (name, version, type, etc.)
+            script_content: The executable script content (after BOM removal, no-op appending)
+            script_checksum: Pre-calculated checksum of the rendered content (before execution transforms)
+            dry_run: If True, skip actual execution
+            logger: Logger instance for this script
+        """
         if self.change_history_table is None:
             raise ValueError("change_history_table is required for deployment operations")
         if dry_run:
@@ -465,8 +475,7 @@ class SnowflakeSession:
             return
         logger.info("Applying change script")
         # Define a few other change related variables
-        # noinspection PyTypeChecker
-        checksum = hashlib.sha224(script_content.encode("utf-8")).hexdigest()
+        checksum = script_checksum
         execution_time = 0
         status = "Success"
 

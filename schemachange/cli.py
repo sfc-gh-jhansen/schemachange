@@ -13,6 +13,7 @@ from schemachange.config.RenderConfig import RenderConfig
 from schemachange.deploy import deploy
 from schemachange.JinjaTemplateProcessor import JinjaTemplateProcessor
 from schemachange.redact_config_secrets import redact_config_secrets
+from schemachange.script_utils import prepare_script_for_execution
 from schemachange.ScriptExecutionError import ScriptExecutionError
 from schemachange.session.SnowflakeSession import SnowflakeSession
 
@@ -33,8 +34,13 @@ def render(config: RenderConfig, script_path: Path, logger: BoundLogger) -> None
     jinja_processor = JinjaTemplateProcessor(project_root=config.root_folder, modules_folder=config.modules_folder)
     content = jinja_processor.render(jinja_processor.relpath(script_path), config.config_vars)
 
+    # Calculate checksum on rendered content (before execution transformations)
     checksum = hashlib.sha224(content.encode("utf-8")).hexdigest()
-    logger.info("Success", checksum=checksum, content=content)
+
+    # Prepare content for execution (BOM removal, no-op appending, validation)
+    executable_content = prepare_script_for_execution(content, script_path.name)
+
+    logger.info("Success", checksum=checksum, content=executable_content)
 
 
 def verify(config, logger: BoundLogger) -> None:

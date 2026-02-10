@@ -7,6 +7,7 @@ import structlog
 
 from schemachange.config.DeployConfig import DeployConfig
 from schemachange.JinjaTemplateProcessor import JinjaTemplateProcessor
+from schemachange.script_utils import prepare_script_for_execution
 from schemachange.session.Script import get_all_scripts_recursively
 from schemachange.session.SnowflakeSession import SnowflakeSession
 
@@ -135,9 +136,14 @@ def deploy(config: DeployConfig, session: SnowflakeSession):
                 scripts_skipped += 1
                 continue
 
+        # Prepare content for execution (BOM removal, no-op appending, validation)
+        # This is done AFTER checksum calculation to preserve backward compatibility
+        executable_content = prepare_script_for_execution(content, script.name)
+
         session.apply_change_script(
             script=script,
-            script_content=content,
+            script_content=executable_content,
+            script_checksum=checksum_current,
             dry_run=config.dry_run,
             logger=script_log,
         )

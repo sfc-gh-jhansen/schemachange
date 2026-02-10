@@ -687,6 +687,7 @@ class TestSnowflakeSession:
                     session.apply_change_script(
                         script=script,
                         script_content="SELECT BAD SYNTAX",
+                        script_checksum="abc123",
                         dry_run=False,
                         logger=logger,
                     )
@@ -751,6 +752,7 @@ class TestSnowflakeSession:
                     session.apply_change_script(
                         script=script,
                         script_content="CREATE TABLE test (id INT)",
+                        script_checksum="abc123",
                         dry_run=False,
                         logger=logger,
                     )
@@ -801,6 +803,7 @@ class TestSnowflakeSession:
                 session.apply_change_script(
                     script=script,
                     script_content="SELECT * FROM test",
+                    script_checksum="abc123",
                     dry_run=True,
                     logger=logger,
                 )
